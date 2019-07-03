@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+  reverse-proxy:
+    image: traefik
+    command: --api --docker
+    labels:
+      - "traefik.frontend.rule=Host:monitor.local"
+      - "traefik.port=8080"
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
+
+  users:
+    build: ./users
+    image: microservices-example/users
+    labels:
+      - "traefik.backend=users"
+      - "traefik.frontend.rule=Host:users.local"
+
+  movies:
+    build: ./movies
+    image: microservices-example/movies
+    labels:
+      - "traefik.backend=movies"
+      - "traefik.frontend.rule=Host:movies.local"
+
+  bookings:
+    build: ./bookings
+    image: microservices-example/bookings
+    labels:
+      - "traefik.backend=bookings"
+      - "traefik.frontend.rule=Host:bookings.local"
+
+  db:
+    image: mongo
+    ports:
+      - target: 27017
+        published: 27017
+        protocol: tcp
+        mode: host
+
+  test:
+    build: ./test
+    image: microservices-example/test
+    labels:
+      - "traefik.backend=test"
+      - "traefik.frontend.rule=Host:test.local"
+      
